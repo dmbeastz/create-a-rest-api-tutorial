@@ -10,14 +10,19 @@ for i, video in enumerate(data):
     response = requests.put(f"{BASE}/video/{i}", json=video)
     print(response.json())
 
-input("Press Enter to continue...")
-response = requests.get(f"{BASE}/video/6")
-print(response.json())
+# input("Press Enter to continue...")
+# response = requests.get(f"{BASE}/video/6")
+# print(response.json())
 
 # input("Press Enter to continue...")
 
-# response = requests.delete(f"{BASE}/video/1")
+# response = requests.delete(f"{BASE}/video/6")
 # print(response.status_code)
+
+i = 2 # Define i with a specific value
+input("Press Enter to continue...")
+response = requests.patch(f"{BASE}/video/{i}", json={"name": "Updated Name", "views": 100, "likes": 50})
+print(response.json())
 
 
 

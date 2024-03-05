@@ -18,9 +18,14 @@ class VideoModel(db.Model):
         return f"Video(name={self.name}, views={self.views}, likes={self.likes})"
 
 video_put_args = reqparse.RequestParser()
-video_put_args.add_argument('name', type=str, help='Name of the video')
-video_put_args.add_argument('views', type=int, help='Views of the video')
-video_put_args.add_argument('likes', type=int, help='Likes on the video')
+video_put_args.add_argument('name', type=str, help='Name of the video', required=True)
+video_put_args.add_argument('views', type=int, help='Views of the video', required=True)
+video_put_args.add_argument('likes', type=int, help='Likes on the video', required=True)
+
+video_update_args = reqparse.RequestParser()
+video_update_args.add_argument('name', type=str, help='Name of the video')
+video_update_args.add_argument('views', type=int, help='Views of the video')
+video_update_args.add_argument('likes', type=int, help='Likes on the video')
 
 resource_fields = {
     'id': fields.Integer,
@@ -33,8 +38,8 @@ class Video(Resource):
     @marshal_with(resource_fields)
     def get(self, video_id):
         result = VideoModel.query.filter_by(id=video_id).first()
-        # if not result:
-        #     abort(404, message="Video not found")
+        if not result:
+            abort(404, message="Video with that id not found")
         return result
     
     @marshal_with(resource_fields)
@@ -42,12 +47,33 @@ class Video(Resource):
         args = video_put_args.parse_args()
         result = VideoModel.query.filter_by(id=video_id).first()
         if result:
-            abort(409,message ='Video id already exists...')
+            abort(409, message='Video id already exists...')
         video = VideoModel(id=video_id, name=args['name'], views=args['views'], likes=args['likes'])
         db.session.add(video)
         db.session.commit()
         return video, 201
     
+    @marshal_with(resource_fields)
+    def patch(self, video_id):
+        args = video_update_args.parse_args()
+        result = VideoModel.query.filter_by(id=video_id).first()
+        if not result:
+            abort(404, message="Video doesn't exist, cannot update")
+
+        if 'name' in args:
+            result.name = args['name']
+
+        if 'views' in args:
+            result.views = args['views']
+            
+        if 'likes' in args:
+            if args['likes'] is not None and args['likes'] < 0:
+                abort(400, message="Likes cannot be negative")
+            result.likes = args['likes']
+
+        db.session.commit()
+        return result
+
     @marshal_with(resource_fields)
     def delete(self, video_id):
         video = VideoModel.query.get(video_id)
